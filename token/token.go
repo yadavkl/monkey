@@ -14,8 +14,16 @@ const (
 	INDENT = "INDENT"
 	INT    = "INT"
 	//operators
-	PLUS   = "+"
-	ASSIGN = "="
+	PLUS     = "+"
+	ASSIGN   = "="
+	MINUS    = "-"
+	BANG     = "!"
+	ASTERISK = "*"
+	SLASH    = "/"
+	LT       = "<"
+	GT       = ">"
+	EQ       = "=="
+	NOT_EQ   = "!="
 	//delemeters
 	COMMA     = ","
 	SEMICOLON = ";"
@@ -28,4 +36,26 @@ const (
 	//keywords
 	FUNCTION = "FUNCTION"
 	LET      = "LET"
+	TRUE     = "TRUE"
+	FALSE    = "FALSE"
+	ELSE     = "ELSE"
+	IF       = "IF"
+	RETURN   = "RETURN"
 )
+
+var keyword = map[string]TokenType{
+	"fn":     FUNCTION,
+	"let":    LET,
+	"true":   TRUE,
+	"false":  FALSE,
+	"else":   ELSE,
+	"if":     IF,
+	"return": RETURN,
+}
+
+func LookupIndent(indent string) TokenType {
+	if tok, ok := keyword[indent]; ok {
+		return tok
+	}
+	return INDENT
+}
