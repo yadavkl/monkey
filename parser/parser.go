@@ -8,17 +8,32 @@ import (
 	"github.com/yadavkl/monkey/token"
 )
 
+const (
+	_           int = iota
+	LOWEST          //lowest precedence
+	EQUALS          //==
+	LESSGREATER     //< or >
+	SUM             //+
+	PRODUCT         //*
+	PREFIX          //-x or !x
+	CALL            //function()
+)
+
 type Parser struct {
-	l         *lexer.Lexer
-	errors    []string
-	curToken  token.Token
-	peekToken token.Token
+	l             *lexer.Lexer
+	errors        []string
+	curToken      token.Token
+	peekToken     token.Token
+	prefixParseFn map[token.TokenType]prefixParseFn
+	infixParseFn  map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
 	p.nextToken()
 	p.nextToken()
+	p.prefixParseFn = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	return p
 }
 
@@ -57,51 +72,10 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
-func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
-	stmt := &ast.ReturnStatement{Token: p.curToken}
-
-	p.nextToken()
-	//left other statement for now
-
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-	return stmt
-}
-
-func (p *Parser) parseLetStatement() *ast.LetStatement {
-	stmt := &ast.LetStatement{Token: p.curToken}
-	if !p.expectPeek(token.INDENT) {
-		return nil
-	}
-	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-	if !p.expectPeek(token.ASSIGN) {
-		return nil
-	}
-	//left other statement for now
-
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-	return stmt
-}
-
-func (p *Parser) curTokenIs(t token.TokenType) bool {
-	return p.curToken.Type == t
-}
-func (p *Parser) peekTokenIs(t token.TokenType) bool {
-	return p.peekToken.Type == t
-}
-
-func (p *Parser) expectPeek(t token.TokenType) bool {
-	if p.peekTokenIs(t) {
-		p.nextToken()
-		return true
-	}
-	p.peekError(t)
-	return false
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
